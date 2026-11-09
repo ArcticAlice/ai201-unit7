@@ -69,8 +69,12 @@ def _load():
         ) from exc
 
     try:
-        _tokenizer = AutoTokenizer.from_pretrained(config.DETECTOR_MODEL)
-        _model = AutoModelForCausalLM.from_pretrained(config.DETECTOR_MODEL)
+        try:
+            _tokenizer = AutoTokenizer.from_pretrained(config.DETECTOR_MODEL, local_files_only=True)
+            _model = AutoModelForCausalLM.from_pretrained(config.DETECTOR_MODEL, local_files_only=True)
+        except Exception:
+            _tokenizer = AutoTokenizer.from_pretrained(config.DETECTOR_MODEL)
+            _model = AutoModelForCausalLM.from_pretrained(config.DETECTOR_MODEL)
         _model.eval()
     except Exception as exc:  # noqa: BLE001
         raise DetectorUnavailable(

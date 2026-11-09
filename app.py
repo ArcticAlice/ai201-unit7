@@ -199,17 +199,75 @@ def submit():
     what should this do when `text` is missing, empty, or enormous? A crash on
     a malformed input is one of the most common real failures there is.
     """
-    payload = request.get_json(silent=True) or {}
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        return jsonify({
+            "error": "bad_request",
+            "message": "Request body must be a valid JSON object.",
+        }), 400
 
-    # TODO: delete this and build the route.
+    if "text" not in payload or payload["text"] is None:
+        return jsonify({
+            "error": "bad_request",
+            "message": "Missing 'text' field in request body.",
+        }), 400
+
+    text = payload["text"]
+    if not isinstance(text, str) or not text.strip():
+        return jsonify({
+            "error": "bad_request",
+            "message": "Field 'text' must be a non-empty string.",
+        }), 400
+
+    if len(text.split()) > 50000:
+        return jsonify({
+            "error": "bad_request",
+            "message": "Text exceeds maximum allowed length of 50,000 words.",
+        }), 400
+
+    creator_id = payload.get("creator_id")
+    if not creator_id or not isinstance(creator_id, str) or not creator_id.strip():
+        return jsonify({
+            "error": "bad_request",
+            "message": "Missing or invalid 'creator_id'.",
+        }), 400
+
+    content_id = str(uuid.uuid4())
+
+    import detector
+    try:
+        model_score = detector.model_signal(text)
+    except ValueError as exc:
+        return jsonify({
+            "error": "bad_request",
+            "message": str(exc),
+        }), 400
+
+    # Milestone 3: single signal with placeholders
+    style_score = 0.5
+    guess = "ai" if model_score >= 0.5 else "human"
+    confidence = round(abs(model_score - 0.5) * 2, 4)
+    label = f"Placeholder label ({guess})"
+
+    audit.log_decision(
+        content_id=content_id,
+        creator_id=creator_id,
+        guess=guess,
+        model_score=model_score,
+        style_score=style_score,
+        combined_score=model_score,
+        label=label,
+        status="decided",
+    )
+
     return jsonify({
-        "error": "not_implemented",
-        "message": "POST /submit isn't built yet — see the TODO in app.py.",
-        "you_sent": {
-            "text_length": len(payload.get("text", "")),
-            "creator_id": payload.get("creator_id"),
-        },
-    }), 501
+        "content_id": content_id,
+        "guess": guess,
+        "confidence": confidence,
+        "label": label,
+        "model_score": model_score,
+        "style_score": style_score,
+    }), 200
 
 
 @app.post("/appeal")
