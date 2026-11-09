@@ -235,6 +235,9 @@ def submit():
     content_id = str(uuid.uuid4())
 
     import detector
+    import stylometry
+    import scoring
+
     try:
         model_score = detector.model_signal(text)
     except ValueError as exc:
@@ -243,10 +246,12 @@ def submit():
             "message": str(exc),
         }), 400
 
-    # Milestone 3: single signal with placeholders
-    style_score = 0.5
-    guess = "ai" if model_score >= 0.5 else "human"
-    confidence = round(abs(model_score - 0.5) * 2, 4)
+    style_score = stylometry.style_signal(text)
+    combined_score = scoring.combine_signals(model_score, style_score)
+
+    # Milestone 4: both signals combined
+    guess = "ai" if combined_score >= 0.5 else "human"
+    confidence = round(abs(combined_score - 0.5) * 2, 4)
     label = f"Placeholder label ({guess})"
 
     audit.log_decision(
@@ -255,7 +260,7 @@ def submit():
         guess=guess,
         model_score=model_score,
         style_score=style_score,
-        combined_score=model_score,
+        combined_score=combined_score,
         label=label,
         status="decided",
     )
