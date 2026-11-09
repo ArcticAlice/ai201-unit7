@@ -44,59 +44,51 @@ Two things worth knowing before you pick numbers:
 ---
 ## 1.
 
-<!-- Your criterion. It must name a number. -->
-
-
+Across 10 distinct samples of writing that I authored myself, at most 1 is labeled as "high-confidence AI" (score >= 0.65).
 
 **Why this target:**
 
-
+On a publishing platform, false accusations cause immediate reputational harm to writers and erode trust in the platform. A 10% maximum false-positive ceiling prioritizes writer protection by pushing questionable human writing into either the "human" or "unsure" bands.
 
 ---
 
 ## 2.
 
-<!-- Your criterion. -->
-
-
+The average combined score for 5 clearly AI-generated samples and 5 clearly human-authored samples must differ by at least 0.35.
 
 **Why this target:**
 
-
+A detector is useless if its score distribution collapses into a narrow clump. A spread of at least 0.35 proves the two signals (perplexity and stylometry) are actively distinguishing between synthetic and organic text.
 
 ---
 
 ## 3.
 
-<!-- Your criterion. -->
-
-
+Across a calibration suite containing pure human text, pure AI text, and hybrid/borderline text, all three user-facing labels ("high-confidence human", "unsure", and "high-confidence AI") are each produced at least once.
 
 **Why this target:**
 
-
+Ensures that thresholds in `config.py` leave sufficient room for every label to be reachable in practice, avoiding dead zones or an unreachable "unsure" category.
 
 ---
 
 ## 4.
 
-<!-- Your criterion. -->
-
-
+For 100% of appeal requests submitted to `POST /appeal` referencing an existing `content_id`, the submission status in `logs/audit.jsonl` is updated to `under_review` and a confirmation response is returned.
 
 **Why this target:**
 
-
+The appeal system is the sole safety net for falsely accused writers. It must be completely reliable, deterministic, and never fail silently or drop a writer's appeal.
 
 ---
 
 ## 5.
 
-<!-- Your criterion. -->
-
-
+100% of malformed requests (empty text, missing "text" key, null body, or payloads over 50,000 words) return an HTTP 400 Bad Request error with a JSON error explanation, without causing a 500 crash or unhandled exception.
 
 **Why this target:**
+
+Backend services in production encounter garbage inputs and malicious payloads. The service must validate input boundaries gracefully rather than crashing the Python process.
 
 
 

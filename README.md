@@ -36,8 +36,15 @@
 
 ## What This Does
 
-<!-- The path a submission takes, from arriving to the label a reader sees.
-     Six or seven steps — this is the trace you wrote in Milestone 1. -->
+Provenance Guard is a backend verification service that evaluates whether submitted text is likely human-written, AI-generated, or uncertain. When a text submission arrives, it proceeds through the following 7-step pipeline:
+
+1. **Request Ingestion (`POST /submit`):** A client sends a `POST` request to `/submit` with a JSON body containing `text` (the body of writing) and `creator_id` (the author's identifier).
+2. **Payload Parsing & Identity Generation:** Flask parses and validates the JSON payload. A unique `content_id` (UUID) is minted for the submission so it can be tracked, audited, and referenced in any subsequent appeal.
+3. **Signal 1 — Model Evaluation (`detector.py`):** The text is passed to the local causal language model (GPT-2) to compute token perplexity. This measures how predictable the word choices are and outputs a normalized `model_score` from `0.0` (surprising / human-like) to `1.0` (highly predictable / AI-like).
+4. **Signal 2 — Stylometric Analysis (`stylometry.py`):** The text is analyzed purely as text—measuring sentence length spread, vocabulary richness (type-token ratio), and punctuation density. This outputs a normalized `style_score` from `0.0` (high variation / human-like) to `1.0` (uniform / AI-like).
+5. **Signal Combination (`scoring.py::combine_signals`):** The system combines `model_score` and `style_score` using a defined weighting and disagreement rule to produce a single continuous score and a preliminary categorical guess (`human` or `ai`).
+6. **Confidence & Label Assignment (`scoring.py::score_to_label`):** The continuous score maps into one of three user-facing label bands: `high-confidence human`, `unsure`, or `high-confidence AI`. Ambiguous or borderline scores land in the `unsure` tier, avoiding false accusations against real writers.
+7. **Audit Logging & Response Dispatch (`audit.py`):** The complete decision record—including timestamp, `content_id`, `creator_id`, individual signal scores, combined score, and assigned status (`accepted`)—is appended to `logs/audit.jsonl`. The endpoint responds with JSON containing `content_id`, `guess`, `confidence`, `label`, `model_score`, and `style_score`.
 
 
 
@@ -53,19 +60,27 @@
 
 ### Signal one — the model signal
 
-**What it measures:**
+**What it measures:** The AI model measures how predicatble the next word is based on the previous one. 
 
-**Why that might differ between human and AI writing:**
+**Why that might differ between human and AI writing:** Since humans are more creative or 
+at least use a larger scope of different phrases and words this causes the predictability to be low. While
+on the hand an AI model tends to use more common phrases and words leading it to be more general.
 
-**What it can't see:**
+**What it can't see:** The model can flag real humans who decided to write plainly. It could
+give a high perplexity score for someone who wanted to write a sentence straight to the point. 
+On the other hand if an AI was prompted to use vocabulary from a specific genre it could possibly 
+score a low perplexity score.
 
 ### Signal two — the style signal
 
-**What it measures:**
+**What it measures:** Measure sentence structure of a body of text. For example puncation and sentence length.
 
-**Why that might differ between human and AI writing:**
+**Why that might differ between human and AI writing:** Huamns use a variety of different puncuation and 
+sentence length. While an AI will try to keep its sentences the same length and use the same strict puncuation 
+a human wouldn't.
 
-**What it can't see:**
+**What it can't see:** Someone can easily get AI generated text and then go into it and add randomness. For example
+decided to split up sentences so their length vary, or add multiple typos. 
 
 ### The combining rule
 
