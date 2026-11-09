@@ -84,66 +84,48 @@ decided to split up sentences so their length vary, or add multiple typos.
 
 ### The combining rule
 
-<!-- Write the rule in words, then give the numbers. What happens when the two
-     signals disagree? -->
+**The rule:** A weighted linear combination of the model signal (perplexity) and the style signal (stylometry). When the signals disagree, the weighted average naturally pulls the combined score toward the center (the "unsure" band), avoiding aggressive misclassifications. We weight stylometry slightly higher than perplexity because common human phrases and conversational conventions (like answering "Thank you" with "You're welcome") have very low perplexity under an AI model; weighting style higher protects human authors who write plainly.
 
-**The rule:**
-
-**The numbers:**
+**The numbers:** 45% model signal (`WEIGHT_MODEL_SIGNAL = 0.45`) and 55% style signal (`WEIGHT_STYLE_SIGNAL = 0.55`).
 
 **Where it lives:** `scoring.py::combine_signals`
 
-<!-- ⚠️ The grader checks your code against that line. If your rule lives
-     somewhere else, say where. -->
-
-**A case where my two signals split, and what my rule does with it:**
-
-
+**A case where my two signals split, and what my rule does with it:** Plain, everyday human writing (such as simple journal entries or daily recounts). The model signal flags it as AI-like (`model_score = 0.8296`) because the vocabulary is common and predictable. However, the style signal detects human structural variation (`style_score = 0.4502`). Blending at 45/55 produces a combined score of `0.6209`, placing the text safely in the `0.40 – 0.65` "unsure" band rather than falsely accusing the writer of cheating.
 
 ---
 
 ## Label Variants
 
-<!-- The exact text of all three labels, as a reader would see them, and the
-     score range each covers.
-
-     Write them for someone who has never heard the word "threshold". -->
-
 | Label | Score range | The exact text a reader sees |
 |---|---|---|
-| high-confidence human |  |  |
-| unsure |  |  |
-| high-confidence AI |  |  |
+| high-confidence human | 0.00 – 0.40 | Based on the provided text, this was most likely written by a person. |
+| unsure | 0.40 – 0.65 | We could not determine with confidence whether this was written by a person or AI. |
+| high-confidence AI | 0.65 – 1.00 | Based on the provided text, this was most likely written by AI. |
 
 **Why I worded the "unsure" one this way:**
-<!-- It's the hardest of the three. It has to admit uncertainty without
-     sounding like an accusation, because the person reading it may well have
-     written every word themselves. -->
-
-
+It frames the uncertainty as a limitation of the verification system ("We could not determine with confidence") rather than an accusation against the author. This ensures honest reporting without alienating human writers whose work happens to score in the middle.
 
 ---
 
 ## Sample Run
 
-<!-- One submission and one appeal, pasted as text: the request, the response,
-     and the log entries. -->
-
 **A submission**
-
-<!-- The response needs content_id, guess, confidence, label, AND both
-     signal scores - model_score and style_score. Unit 8's tools read those
-     two off the response, so leaving them out costs you next unit's
-     diagnostics. -->
 
 ```bash
 $ curl -X POST http://127.0.0.1:5000/submit \
   -H "Content-Type: application/json" \
-  -d '{"text": "...", "creator_id": "..."}'
+  -d '{"text": "The implementation of the proposed framework requires careful consideration of several key factors. First, it is important to note that the system must be able to handle a wide variety of different inputs. Additionally, the overall performance of the solution depends on a number of important variables.", "creator_id": "author_bob"}'
 ```
 
 ```json
-
+{
+  "confidence": 0.6737,
+  "content_id": "683a7ae4-cb94-4fdd-af54-d68210ad6efa",
+  "guess": "ai",
+  "label": "Based on the provided text, this was most likely written by AI.",
+  "model_score": 0.8864,
+  "style_score": 0.4997
+}
 ```
 
 **An appeal**
@@ -151,11 +133,16 @@ $ curl -X POST http://127.0.0.1:5000/submit \
 ```bash
 $ curl -X POST http://127.0.0.1:5000/appeal \
   -H "Content-Type: application/json" \
-  -d '{"content_id": "...", "reasoning": "..."}'
+  -d '{"content_id": "683a7ae4-cb94-4fdd-af54-d68210ad6efa", "reasoning": "I wrote this paragraph using formal academic phrasing for my engineering paper."}'
 ```
 
 ```json
-
+{
+  "content_id": "683a7ae4-cb94-4fdd-af54-d68210ad6efa",
+  "message": "Appeal received and status updated to under_review.",
+  "ok": true,
+  "status": "under_review"
+}
 ```
 
 **What the log shows afterwards**
@@ -165,7 +152,41 @@ $ curl "http://127.0.0.1:5000/log?limit=3"
 ```
 
 ```json
-
+{
+  "count": 3,
+  "entries": [
+    {
+      "combined_score": 0.6737,
+      "content_id": "683a7ae4-cb94-4fdd-af54-d68210ad6efa",
+      "creator_id": "author_bob",
+      "guess": "ai",
+      "label": "Based on the provided text, this was most likely written by AI.",
+      "model_score": 0.8864,
+      "status": "decided",
+      "style_score": 0.4997,
+      "timestamp": "2026-11-09T22:35:24+00:00"
+    },
+    {
+      "combined_score": 0.6209,
+      "content_id": "88a0326e-9f73-48d7-a200-dec8a30d87b7",
+      "creator_id": "author_charlie",
+      "guess": "unsure",
+      "label": "We could not determine with confidence whether this was written by a person or AI.",
+      "model_score": 0.8296,
+      "status": "decided",
+      "style_score": 0.4502,
+      "timestamp": "2026-11-09T22:35:24+00:00"
+    },
+    {
+      "content_id": "683a7ae4-cb94-4fdd-af54-d68210ad6efa",
+      "creator_id": "author_bob",
+      "event": "appeal",
+      "reasoning": "I wrote this paragraph using formal academic phrasing for my engineering paper.",
+      "status": "under_review",
+      "timestamp": "2026-11-09T22:35:24+00:00"
+    }
+  ]
+}
 ```
 
 ---
@@ -174,15 +195,15 @@ $ curl "http://127.0.0.1:5000/log?limit=3"
 
 **Moment 1**
 
-- *What I asked for:*
-- *What came back:*
-- *What I changed:*
+- *What I asked for:* Feedback on my initial 3 acceptance criteria for Milestone 2 regarding score thresholds, gibberish handling, and restricting appeals on high AI scores.
+- *What came back:* Detailed critique explaining that setting thresholds in code is an implementation rule rather than an observable performance target, that "gibberish" is subjective and unmeasurable, and that barring appeals on high AI scores harms falsely accused writers. The AI recommended a full set of 5 testable criteria covering false positives, score spread, label coverage, appeal reliability, and bad input handling.
+- *What I changed:* I updated `criteria.md` to use all 5 measurable criteria, establishing a strict 10% false-positive limit on my own writing, a 0.35 score spread between human and AI text, reachability of all three labels, and graceful 400 Bad Request handling for malformed input.
 
 **Moment 2**
 
-- *What I asked for:*
-- *What came back:*
-- *What I changed:*
+- *What I asked for:* Assistance in implementing the Python features across `stylometry.py`, `scoring.py`, and `app.py`, specifically computing sentence length spread, type-token ratio, punctuation density, combining the signals with custom weights, and implementing the `/submit` and `/appeal` routes.
+- *What came back:* Python code providing statistical calculation of sentence variation (coefficient of variation), vocabulary richness, normalized 0–1 style scoring, the combining rule in `scoring.py`, and Flask route handlers with input validation and audit logging.
+- *What I changed:* Configured the exact weights (45% model, 55% style) and threshold cutoffs (0.40 to 0.65 for unsure) in `config.py`, customized the user-facing label text to match the requested template, and verified that edge cases return 400 Bad Request.
 
 <!-- ═══════════════════════ UNIT 8 — THE TEST ═══════════════════════ -->
 
