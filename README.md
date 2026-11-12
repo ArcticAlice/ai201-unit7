@@ -742,19 +742,31 @@ Produced by `run_eval.py::main`:
 
 **Diagnoses**
 
-<!-- For each miss AND each broken attack: the stage and the mechanism.
+### Criteria Misses
 
-     Your service has five stages: the route, signal one, signal two, the
-     combining rule, and the label mapping.
+#### Criterion 2: Score Spread Collapsed (Target: ≥ 0.35, Actual: 0.1207 across all 3 trials) — MISSED
+- **Stage:** Combining rule (`scoring.py::combine_signals`) and Signal 2 (`stylometry.py`).
+- **Mechanism:** Stylometry was weighted at 55% (`WEIGHT_STYLE_SIGNAL = 0.55`). For standard narrative and explanatory prose, stylometric indicators (sentence length variation, punctuation density, type-token ratio) cluster tightly in the 0.30–0.55 range for both human and AI text. Simultaneously, GPT-2 token perplexity (`model_score`) for fluent modern AI text produced scores around 0.55–0.72 rather than reaching near 1.0. Blending these signals with a 45/55 linear average compressed the overall score distribution into a narrow mid-tier band (0.35–0.65). Consequently, the AI average (0.5424) and human average (0.4217) separated by only 0.1207, falling well short of the 0.35 target.
 
-     Not a diagnosis:  "The evasion attacks got through."
-     A diagnosis:      "Four evasion inputs got through. All four had typos
-                        added to AI-generated text. My second signal measures
-                        word variety, and typos raise word variety — so it read
-                        them as more human. My combining rule weights that
-                        signal at 0.6, so it dragged the whole score down."
+---
 
-     Look for a pattern. Five failures on one signal is one problem, not five. -->
+### Broken Attacks by Stage and Mechanism
+
+#### 1. False Positives: `FP02`, `FP03`, `FP05` Flagged as High-Confidence AI
+- **Stage:** Label mapping (`config.py::AI_THRESHOLD`) and Signal 1 (`detector.py`).
+- **Mechanism:** Formal human prose (`FP02`, score 0.6555), careful non-native English writing (`FP03`, score 0.6547), and technical documentation (`FP05`, score 0.7165) all exhibited high model predictability (`model_score = 0.74` to `0.81`). GPT-2 assigns low perplexity to standard grammatical syntax and common technical vocabulary. Because `AI_THRESHOLD` was set at `0.65`, `FP02` and `FP03` crossed the cutoff by less than 0.006, falsely labeling real human writing as AI-generated.
+
+#### 2. Evasions: `EV01`–`EV09` Escaped Detection
+- **Stage:** Signal 2 (`stylometry.py`) and Combining rule (`scoring.py`).
+- **Mechanism:**
+  - In `EV01`, injected typos inflated unique word counts (type-token ratio), causing Signal 2 to interpret misspelled tokens as rich human vocabulary (`style_score = 0.5224`), which pulled the combined score to 0.3609 (`human`).
+  - In `EV02` and `EV06`, artificially breaking sentences or combining one very long sentence with one very short sentence artificially inflated sentence length variance. Signal 2 generated very low style scores (`0.1413` and `0.1994`). Because Signal 2 carries 55% weight, this dragged the combined score directly into the `human` band (`0.345` and `0.367`).
+  - In `EV03`, `EV04`, `EV07`, and `EV09`, inserting quotations, rare words, excessive punctuation, or a human opening paragraph raised perplexity and stylometric spread just enough to land in the 0.44–0.55 `unsure` band.
+  - **Pattern:** Signal 2 is vulnerable to superficial text formatting hacks (typos, sentence fragmentation, punctuation padding) that attackers use to spoof human stylometric variation without affecting AI semantics.
+
+#### 3. Malformed Inputs: `MF03`, `MF04`, `MF05`, `MF06` Accepted as 200 OK
+- **Stage:** Route input validation (`app.py::submit`).
+- **Mechanism:** Input guards only verified that `text` was a non-empty string under 50,000 words. `MF03` (control characters) and `MF04` (punctuation-only text) satisfied the non-empty check despite containing zero human words. GPT-2 returned a default score of 0.0 or minimal perplexity, and stylometry defaulted to 0.5, classifying non-text junk as `human` (scores 0.275 and 0.280) rather than rejecting it with an HTTP 400 Bad Request. Similarly, `MF05` (a single massive word) and `MF06` (emoji-only text) proceeded through the scoring pipeline instead of being caught as invalid prose.
 
 
 
