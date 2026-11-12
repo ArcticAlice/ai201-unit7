@@ -151,7 +151,7 @@ def health():
 # ── YOU BUILD THIS ────────────────────────────────────────────────────────────
 
 @app.post("/submit")
-# @limiter.limit(f"{config.RATE_LIMIT_PER_MINUTE}/minute;{config.RATE_LIMIT_PER_DAY}/day")
+@limiter.limit(f"{config.RATE_LIMIT_PER_MINUTE}/minute;{config.RATE_LIMIT_PER_DAY}/day")
 def submit():
     """
     Take a piece of text, decide about it, log the decision, answer.
@@ -201,12 +201,17 @@ def submit():
     """
     payload = request.get_json(silent=True)
     if not isinstance(payload, dict):
+        audit.log_rejection(creator_id="unknown", reason="invalid_json_body")
         return jsonify({
             "error": "bad_request",
             "message": "Request body must be a valid JSON object.",
         }), 400
 
+    creator_id = payload.get("creator_id")
+    safe_creator_id = creator_id if isinstance(creator_id, str) and creator_id.strip() else "unknown"
+
     if "text" not in payload or payload["text"] is None:
+        audit.log_rejection(creator_id=safe_creator_id, reason="missing_text")
         return jsonify({
             "error": "bad_request",
             "message": "Missing 'text' field in request body.",
@@ -214,19 +219,21 @@ def submit():
 
     text = payload["text"]
     if not isinstance(text, str) or not text.strip():
+        audit.log_rejection(creator_id=safe_creator_id, reason="empty_or_non_string_text")
         return jsonify({
             "error": "bad_request",
             "message": "Field 'text' must be a non-empty string.",
         }), 400
 
     if len(text.split()) > 50000:
+        audit.log_rejection(creator_id=safe_creator_id, reason="text_too_long")
         return jsonify({
             "error": "bad_request",
             "message": "Text exceeds maximum allowed length of 50,000 words.",
         }), 400
 
-    creator_id = payload.get("creator_id")
     if not creator_id or not isinstance(creator_id, str) or not creator_id.strip():
+        audit.log_rejection(creator_id="unknown", reason="missing_or_invalid_creator_id")
         return jsonify({
             "error": "bad_request",
             "message": "Missing or invalid 'creator_id'.",
@@ -241,6 +248,7 @@ def submit():
     try:
         model_score = detector.model_signal(text)
     except ValueError as exc:
+        audit.log_rejection(creator_id=creator_id, reason=str(exc))
         return jsonify({
             "error": "bad_request",
             "message": str(exc),

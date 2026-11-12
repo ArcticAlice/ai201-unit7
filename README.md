@@ -211,24 +211,20 @@ $ curl "http://127.0.0.1:5000/log?limit=3"
 
 ## Rate Limiting
 
-**My limits:** ___ per minute, ___ per day
+**My limits:** 10 per minute, 100 per day
 
 **Why those numbers and not others:**
-<!-- Think about two people: a real writer submitting their own work a few
-     times an hour, and a script sending a thousand variations to map your
-     thresholds. Your numbers have to be liveable for the first and hostile to
-     the second. -->
+A legitimate human writer revising essays or drafts submits a few times per hour, and at most 5–10 times per minute during rapid iterative edits. Conversely, an adversarial probing script attempting to map score thresholds and evasion patterns sends dozens or hundreds of automated requests. Capping requests at 10 per minute and 100 per day accommodates real authors while stopping automated boundary-probing scripts.
 
-**What a caller counts as:** <!-- per address, or per creator_id? They fail
-differently — one script can look like a thousand callers, and one household
-can look like one. -->
+**What a caller counts as:**
+A caller counts as `creator_id` when provided as a valid non-empty string in the JSON payload, falling back to the remote client IP address (`get_remote_address()`). This prevents multiple independent writers on a shared network (like a household or campus) from exhausting each other's quota, while anonymous or malformed requests are bound to their IP address.
 
 **The run of status codes when I pushed past it:**
 
 <!-- python run_attacks.py --flood 15 -->
 
 ```
-
+200 200 200 200 200 200 200 200 200 200 429 429 429 429 429
 ```
 
 ---
