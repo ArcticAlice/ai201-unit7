@@ -422,17 +422,322 @@ Explaining this to an authentic writer who took great care to write clear, gramm
 
 | Criterion | Target | Run 1 | Run 2 | Run 3 | Verdict |
 |---|---|---|---|---|---|
-| 1.  |  |  |  |  |  |
-| 2.  |  |  |  |  |  |
-| 3.  |  |  |  |  |  |
-| 4.  |  |  |  |  |  |
-| 5.  |  |  |  |  |  |
+| 1. My own writing flagged as AI | ≤ 1 of 10 | 0/10 | 0/10 | 0/10 | MET |
+| 2. Score spread between AI and human | ≥ 0.35 | 0.1207 | 0.1207 | 0.1207 | MISSED |
+| 3. All three labels reachable | 3 of 3 | 3/3 | 3/3 | 3/3 | MET |
+| 4. Appeal updates status to under_review | 5 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 5. Malformed requests return 400 Bad Request | 5 of 5 | 5/5 | 5/5 | 5/5 | MET |
 
 **Real output from one trial**, pasted as text, naming the file and function
 that produced it:
 
-```json
+Produced by `run_eval.py::main`:
 
+```json
+{
+  "criterion_1_my_own_writing": [
+    {
+      "status": 200,
+      "guess": "unsure",
+      "confidence": 0.4794,
+      "model_score": 0.5332,
+      "style_score": 0.4353,
+      "label": "We could not determine with confidence whether this was written by a person or AI.",
+      "sent": "Social responsibility should be an important consideration to business"
+    },
+    {
+      "status": 200,
+      "guess": "human",
+      "confidence": 0.3996,
+      "model_score": 0.5199,
+      "style_score": 0.3011,
+      "label": "Based on the provided text, this was most likely written by a person.",
+      "sent": "John Lewis and the large number of people who committed sit-ins displa"
+    },
+    {
+      "status": 200,
+      "guess": "unsure",
+      "confidence": 0.4666,
+      "model_score": 0.6196,
+      "style_score": 0.3414,
+      "label": "We could not determine with confidence whether this was written by a person or AI.",
+      "sent": "In the 1900s, a patient\u2019s pain wasn\u2019t given much thought to. Doctors p"
+    },
+    {
+      "status": 200,
+      "guess": "unsure",
+      "confidence": 0.4758,
+      "model_score": 0.8381,
+      "style_score": 0.1793,
+      "label": "We could not determine with confidence whether this was written by a person or AI.",
+      "sent": "Bacteria are one of the three domains of life. They play a key role in"
+    },
+    {
+      "status": 200,
+      "guess": "unsure",
+      "confidence": 0.5696,
+      "model_score": 0.7097,
+      "style_score": 0.4549,
+      "label": "We could not determine with confidence whether this was written by a person or AI.",
+      "sent": "I would gather up as much evidence to show that I did not go through w"
+    },
+    {
+      "status": 200,
+      "guess": "unsure",
+      "confidence": 0.5138,
+      "model_score": 0.4824,
+      "style_score": 0.5394,
+      "label": "We could not determine with confidence whether this was written by a person or AI.",
+      "sent": "It\u2019s morning and I\u2019m helping set up stock for the day. I hear the mark"
+    },
+    {
+      "status": 200,
+      "guess": "unsure",
+      "confidence": 0.4239,
+      "model_score": 0.5826,
+      "style_score": 0.294,
+      "label": "We could not determine with confidence whether this was written by a person or AI.",
+      "sent": "Three days. That\u2019s the absurd amount of time I spent attempting to bui"
+    },
+    {
+      "status": 200,
+      "guess": "unsure",
+      "confidence": 0.5892,
+      "model_score": 0.5226,
+      "style_score": 0.6437,
+      "label": "We could not determine with confidence whether this was written by a person or AI.",
+      "sent": "The physical transition is when he leaves his home to go live with unc"
+    },
+    {
+      "status": 200,
+      "guess": "unsure",
+      "confidence": 0.5043,
+      "model_score": 0.3259,
+      "style_score": 0.6502,
+      "label": "We could not determine with confidence whether this was written by a person or AI.",
+      "sent": "I think the line Samuel 16:12 (KJV) becomes distorted into showing Dav"
+    },
+    {
+      "status": 200,
+      "guess": "unsure",
+      "confidence": 0.5128,
+      "model_score": 0.4971,
+      "style_score": 0.5256,
+      "label": "We could not determine with confidence whether this was written by a person or AI.",
+      "sent": "The colosseum was packed to the brink. Spectators cheered as the first"
+    }
+  ],
+  "criterion_2_score_spread": [
+    {
+      "status": 200,
+      "guess": "unsure",
+      "confidence": 0.5309,
+      "model_score": 0.5869,
+      "style_score": 0.485,
+      "label": "We could not determine with confidence whether this was written by a person or AI.",
+      "sent": "Artificial intelligence is transforming modern society across various "
+    },
+    {
+      "status": 200,
+      "guess": "unsure",
+      "confidence": 0.5241,
+      "model_score": 0.5592,
+      "style_score": 0.4953,
+      "label": "We could not determine with confidence whether this was written by a person or AI.",
+      "sent": "In today's digital landscape, effective communication plays a crucial "
+    },
+    {
+      "status": 200,
+      "guess": "unsure",
+      "confidence": 0.6173,
+      "model_score": 0.7138,
+      "style_score": 0.5384,
+      "label": "We could not determine with confidence whether this was written by a person or AI.",
+      "sent": "The implementation of sustainable energy systems represents a fundamen"
+    },
+    {
+      "status": 200,
+      "guess": "unsure",
+      "confidence": 0.5406,
+      "model_score": 0.5279,
+      "style_score": 0.5509,
+      "label": "We could not determine with confidence whether this was written by a person or AI.",
+      "sent": "Data analysis has become an indispensable component of contemporary de"
+    },
+    {
+      "status": 200,
+      "guess": "unsure",
+      "confidence": 0.4993,
+      "model_score": 0.5112,
+      "style_score": 0.4896,
+      "label": "We could not determine with confidence whether this was written by a person or AI.",
+      "sent": "Urban planning in modern metropolitan regions necessitates balanced ap"
+    },
+    {
+      "status": 200,
+      "guess": "unsure",
+      "confidence": 0.4483,
+      "model_score": 0.4873,
+      "style_score": 0.4164,
+      "label": "We could not determine with confidence whether this was written by a person or AI.",
+      "sent": "It\u2019s morning and I\u2019m helping set up stock for the day. I hear the mark"
+    },
+    {
+      "status": 200,
+      "guess": "human",
+      "confidence": 0.3303,
+      "model_score": 0.5874,
+      "style_score": 0.12,
+      "label": "Based on the provided text, this was most likely written by a person.",
+      "sent": "Three days. That\u2019s the absurd amount of time I spent attempting to bui"
+    },
+    {
+      "status": 200,
+      "guess": "unsure",
+      "confidence": 0.4556,
+      "model_score": 0.4244,
+      "style_score": 0.4811,
+      "label": "We could not determine with confidence whether this was written by a person or AI.",
+      "sent": "The colosseum was packed to the brink. Spectators cheered as the first"
+    },
+    {
+      "status": 200,
+      "guess": "unsure",
+      "confidence": 0.5875,
+      "model_score": 0.5606,
+      "style_score": 0.6095,
+      "label": "We could not determine with confidence whether this was written by a person or AI.",
+      "sent": "I was walking down the gravel road behind the old barn when the storm "
+    },
+    {
+      "status": 200,
+      "guess": "human",
+      "confidence": 0.2869,
+      "model_score": 0.4432,
+      "style_score": 0.159,
+      "label": "Based on the provided text, this was most likely written by a person.",
+      "sent": "My grandmother always kept an old rusted biscuit tin on the top shelf "
+    }
+  ],
+  "criterion_3_label_coverage": [
+    {
+      "status": 200,
+      "guess": "human",
+      "confidence": 0.3563,
+      "model_score": 0.5064,
+      "style_score": 0.2335,
+      "label": "Based on the provided text, this was most likely written by a person.",
+      "sent": "John Lewis and the large number of people who committed sit-ins displa"
+    },
+    {
+      "status": 200,
+      "guess": "unsure",
+      "confidence": 0.4771,
+      "model_score": 0.5314,
+      "style_score": 0.4327,
+      "label": "We could not determine with confidence whether this was written by a person or AI.",
+      "sent": "Social responsibility should be an important consideration to business"
+    },
+    {
+      "status": 200,
+      "guess": "ai",
+      "confidence": 0.6737,
+      "model_score": 0.8864,
+      "style_score": 0.4997,
+      "label": "Based on the provided text, this was most likely written by AI.",
+      "sent": "The implementation of the proposed framework requires careful consider"
+    }
+  ],
+  "criterion_4_appeal_path": [
+    {
+      "status": 200,
+      "content_id": "a32ed18e-e37b-4edd-bc8f-de1cec9cbff4",
+      "appeal_status": "under_review",
+      "ok": true,
+      "message": "Appeal received and status updated to under_review.",
+      "sent": "appeal: I drafted this historical overview myself using primary sour"
+    },
+    {
+      "status": 200,
+      "content_id": "36cbbe78-033f-4276-8c3c-e1b443154a1c",
+      "appeal_status": "under_review",
+      "ok": true,
+      "message": "Appeal received and status updated to under_review.",
+      "sent": "appeal: I authored this technical explanation for my team's document"
+    },
+    {
+      "status": 200,
+      "content_id": "07022c66-8d74-41dd-a453-b345920f3755",
+      "appeal_status": "under_review",
+      "ok": true,
+      "message": "Appeal received and status updated to under_review.",
+      "sent": "appeal: This is a creative personal memoir recounting my own family "
+    },
+    {
+      "status": 200,
+      "content_id": "5000d176-b17d-45c8-b8df-820cfaccc102",
+      "appeal_status": "under_review",
+      "ok": true,
+      "message": "Appeal received and status updated to under_review.",
+      "sent": "appeal: This analysis was composed independently for a university li"
+    },
+    {
+      "status": 200,
+      "content_id": "808ff789-ef36-4695-b22a-d56e59c9dc80",
+      "appeal_status": "under_review",
+      "ok": true,
+      "message": "Appeal received and status updated to under_review.",
+      "sent": "appeal: I wrote this reflection based on corporate ethics case studi"
+    }
+  ],
+  "criterion_5_bad_input": [
+    {
+      "status": 400,
+      "guess": null,
+      "confidence": null,
+      "model_score": null,
+      "style_score": null,
+      "label": null,
+      "sent": "(empty text)"
+    },
+    {
+      "status": 400,
+      "guess": null,
+      "confidence": null,
+      "model_score": null,
+      "style_score": null,
+      "label": null,
+      "sent": "{\"creator_id\": \"eval_bad_missing\"}"
+    },
+    {
+      "status": 400,
+      "guess": null,
+      "confidence": null,
+      "model_score": null,
+      "style_score": null,
+      "label": null,
+      "sent": "{\"text\": null, \"creator_id\": \"eval_bad_null\"}"
+    },
+    {
+      "status": 400,
+      "guess": null,
+      "confidence": null,
+      "model_score": null,
+      "style_score": null,
+      "label": null,
+      "sent": "word word word word word word word word word word word word word word "
+    },
+    {
+      "status": 400,
+      "guess": null,
+      "confidence": null,
+      "model_score": null,
+      "style_score": null,
+      "label": null,
+      "sent": "   \n\t  "
+    }
+  ]
+}
 ```
 
 **Diagnoses**

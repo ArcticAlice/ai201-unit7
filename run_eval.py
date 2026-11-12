@@ -113,27 +113,58 @@ def main():
         trials = []
         for trial in range(1, args.trials + 1):
             results = []
-            for i, body in enumerate(bodies_for(scenario), 1):
-                preview = describe(body)
-                try:
-                    response = requests.post(f"{args.url}/submit", json=body,
-                                             timeout=args.timeout)
-                    payload = response.json() if response.content else {}
-                    results.append({
-                        "status": response.status_code,
-                        "guess": payload.get("guess"),
-                        "confidence": payload.get("confidence"),
-                        "model_score": payload.get("model_score"),
-                        "style_score": payload.get("style_score"),
-                        "label": payload.get("label"),
-                        "sent": preview,
-                    })
-                except Exception as exc:  # noqa: BLE001
-                    results.append({"status": None, "error": f"{type(exc).__name__}: {exc}",
-                                    "sent": preview})
+            if scenario.get("appeals"):
+                for i, item in enumerate(scenario["appeals"], 1):
+                    preview = f"appeal: {item['reasoning'][:60]}"
+                    try:
+                        sub_res = requests.post(
+                            f"{args.url}/submit",
+                            json={"text": item["submission_text"], "creator_id": f"eval_author_{i}"},
+                            timeout=args.timeout,
+                        )
+                        cid = sub_res.json().get("content_id")
+                        app_res = requests.post(
+                            f"{args.url}/appeal",
+                            json={"content_id": cid, "reasoning": item["reasoning"]},
+                            timeout=args.timeout,
+                        )
+                        app_payload = app_res.json() if app_res.content else {}
+                        results.append({
+                            "status": app_res.status_code,
+                            "content_id": cid,
+                            "appeal_status": app_payload.get("status"),
+                            "ok": app_payload.get("ok"),
+                            "message": app_payload.get("message"),
+                            "sent": preview,
+                        })
+                    except Exception as exc:  # noqa: BLE001
+                        results.append({
+                            "status": None,
+                            "error": f"{type(exc).__name__}: {exc}",
+                            "sent": preview,
+                        })
+            else:
+                for i, body in enumerate(bodies_for(scenario), 1):
+                    preview = describe(body)
+                    try:
+                        response = requests.post(f"{args.url}/submit", json=body,
+                                                 timeout=args.timeout)
+                        payload = response.json() if response.content else {}
+                        results.append({
+                            "status": response.status_code,
+                            "guess": payload.get("guess"),
+                            "confidence": payload.get("confidence"),
+                            "model_score": payload.get("model_score"),
+                            "style_score": payload.get("style_score"),
+                            "label": payload.get("label"),
+                            "sent": preview,
+                        })
+                    except Exception as exc:  # noqa: BLE001
+                        results.append({"status": None, "error": f"{type(exc).__name__}: {exc}",
+                                        "sent": preview})
 
             trials.append(results)
-            guesses = [r.get("guess") or "—" for r in results]
+            guesses = [r.get("guess") or r.get("appeal_status") or str(r.get("status")) or "—" for r in results]
             print(f"  trial {trial}: {', '.join(guesses)}")
 
         rows.append({"scenario": scenario, "trials": trials})
