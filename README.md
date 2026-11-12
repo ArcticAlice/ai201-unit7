@@ -205,6 +205,12 @@ $ curl "http://127.0.0.1:5000/log?limit=3"
 - *What came back:* Python code providing statistical calculation of sentence variation (coefficient of variation), vocabulary richness, normalized 0–1 style scoring, the combining rule in `scoring.py`, and Flask route handlers with input validation and audit logging.
 - *What I changed:* Configured the exact weights (45% model, 55% style) and threshold cutoffs (0.40 to 0.65 for unsure) in `config.py`, customized the user-facing label text to match the requested template, and verified that edge cases return 400 Bad Request.
 
+**Moment 3**
+
+- *What I asked for:* Assistance in setting up rate limiting and rejection audit logging, executing the full 56-attack red team test suite, automating three-trial evaluation runs in `run_eval.py`, diagnosing the pipeline mechanisms behind evasion and false-positive failures, and analyzing trade-offs between widening thresholds versus adjusting input validation.
+- *What came back:* Structured testing workflows executing `run_attacks.py` and `run_eval.py`, root-cause analysis pinpointing how stylometric heuristics and model predictability collapsed score spreads and caused false positives on formal prose, and quantitative evaluation of widening `AI_THRESHOLD` to 0.67.
+- *What I changed:* Enabled rate limiting at 10/min and 100/day with audit rejection logging, executed before-and-after attack runs, populated `scenarios.py` with 10 authentic author samples, diagnosed all five stages, raised `AI_THRESHOLD` to 0.67 to protect innocent human writers, and documented all findings and trade-offs.
+
 <!-- ═══════════════════════ UNIT 8 — THE TEST ═══════════════════════ -->
 
 ---
@@ -855,12 +861,31 @@ Yes, it helped where it mattered most: protecting real writers. In the initial a
 <!-- For each attack still getting through and each criterion still missed:
      what you'd do, and why you stopped. -->
 
+### Remaining Attacks Still Getting Through
+1. **Technical Documentation False Positive (`FP05`):**
+   - *Status:* Human-written technical documentation scored `0.7165`, remaining above the `0.67` threshold and misclassified as AI.
+   - *What I'd do:* Implement domain-aware preprocessing or custom thresholding for technical/academic text, which naturally exhibits lower perplexity and rigid terminology.
+   - *Why I stopped:* Raising `AI_THRESHOLD` beyond 0.72 would cause virtually all conversational AI text to escape into the unsure band, neutralizing the detector without training a domain-specific model.
 
+2. **Adversarial Evasions (`EV01`–`EV09`):**
+   - *Status:* AI text with injected typos, manipulated sentence length variance, quotation padding, or prepended human introductions still evade classification as `ai`, landing in `human` or `unsure`.
+   - *What I'd do:* Add an input-sanitization step that spell-checks and normalizes typos before stylometric analysis, combined with sliding-window chunk evaluation to prevent human introductory paragraphs from masking trailing AI content.
+   - *Why I stopped:* Course guidelines restrict Unit 8 to a single measured improvement to isolate causal variables.
+
+3. **Non-Prose Malformed Payloads (`MF03`, `MF04`, `MF05`, `MF06`):**
+   - *Status:* Control characters (`MF03`) and punctuation-only strings (`MF04`) return 200 OK and score as `human` (scores `0.275` and `0.280`), while giant single words (`MF05`) and emoji-only text (`MF06`) score as `ai`.
+   - *What I'd do:* Add regex-based token validation in `app.py::submit` to reject any payload lacking at least three standard natural language words with HTTP 400 Bad Request.
+   - *Why I stopped:* Prioritized fixing false accusations against real human authors (`FP02`, `FP03`) as the single allowed change.
+
+### Remaining Criteria Missed
+1. **Criterion 2 (Score Spread Between AI and Human Text):**
+   - *Status:* Average AI score (`0.5424`) and human score (`0.4217`) differed by only `0.1207`, missing the `≥ 0.35` target.
+   - *What I'd do:* Replace the raw linear weighting in `scoring.py::combine_signals` with non-linear sigmoid score scaling and rebalance feature weights so model and stylometry distributions amplify score divergence on clear-cut samples.
+   - *Why I stopped:* Adhered to the single-change rule for Milestone 5.
 
 **The trade I'd make if this ran for real:**
 
-<!-- Two sentences. Fewer wrong accusations means more AI text getting through.
-     Say which way you'd go and WHO PAYS FOR IT. -->
+In production, I would prioritize writer protection by keeping false-positive accusations as close to zero as possible, aggressively expanding the "unsure" band and routing flagged drafts to human reviewers. The platform pays for this trade by accepting increased human moderation overhead and acknowledging that subtle AI assistance will occasionally go unflagged, which is far better than wrongly accusing and permanently alienating honest creators.
 
 
 
